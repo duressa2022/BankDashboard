@@ -77,9 +77,9 @@ func (cr *CompanyRepository) GetCompanies(c context.Context, page int, size int)
 }
 
 // method for posting company into the database
-func (cr *CompanyRepository) PostCompany(c context.Context, companyRequest *domain.CompanyRequest) (*domain.Company, error) {
+func (cr *CompanyRepository) PostCompany(c context.Context, company *domain.Company) (*domain.Company, error) {
 	collection := cr.database.Collection(cr.collection)
-	userId, err := collection.InsertOne(c, companyRequest)
+	userId, err := collection.InsertOne(c, company)
 	if err != nil {
 		return &domain.Company{}, err
 	}

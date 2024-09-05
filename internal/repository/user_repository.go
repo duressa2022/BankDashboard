@@ -15,9 +15,9 @@ type UserRepository struct {
 }
 
 // method for creating/inserting user into the database
-func (ur *UserRepository) PostUser(c context.Context, userRequest *domain.UserRequest) (*domain.UserResponse, error) {
+func (ur *UserRepository) PostUser(c context.Context, user *domain.User) (*domain.UserResponse, error) {
 	collection := ur.database.Collection(ur.collection)
-	userId, err := collection.InsertOne(c, userRequest)
+	userId, err := collection.InsertOne(c, user)
 	if err != nil {
 		return &domain.UserResponse{}, err
 	}
@@ -88,6 +88,16 @@ func (ur *UserRepository) GetByUserName(c context.Context, username string) (*do
 	err := collection.FindOne(c, bson.D{{Key: "username", Value: username}}).Decode(&User)
 	if err != nil {
 		return &domain.UserResponse{}, err
+	}
+	return User, nil
+}
+// method for getting user information by using username
+func (ur *UserRepository) GetByUserEmail(c context.Context, email string) (*domain.UserResponse, error) {
+	collection := ur.database.Collection(ur.collection)
+	var User *domain.UserResponse
+	err := collection.FindOne(c, bson.D{{Key: "email", Value: email}}).Decode(&User)
+	if err != nil {
+		return nil, err
 	}
 	return User, nil
 }

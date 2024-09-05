@@ -68,9 +68,10 @@ type UserPreference struct {
 // interface for working with user repo
 
 type UserInterface interface {
-	PostUser(c context.Context,userRequest *UserRequest)(*UserResponse,error)
+	PostUser(c context.Context,user *User)(*UserResponse,error)
 	Update(c context.Context,userRequest *UserRequest)(*UserResponse,error)
 	UpdatePreference(c context.Context,userPreference *UserPreference)(*UserPreference,error)
 	GetByUserName(c context.Context,username string)(*UserResponse,error)
+	GetByUserEmail(c context.Context,username string)(*UserResponse,error)
 	
 }
