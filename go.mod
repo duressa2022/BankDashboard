@@ -2,7 +2,10 @@ module working.com/bank_dash
 
 go 1.22.5
 
-require go.mongodb.org/mongo-driver v1.16.1
+require (
+	github.com/golang-jwt/jwt/v5 v5.2.1
+	go.mongodb.org/mongo-driver v1.16.1
+)
 
 require (
 	github.com/golang/snappy v0.0.4 // indirect
