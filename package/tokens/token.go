@@ -96,3 +96,20 @@ func GetUserId(token string, secret string) (string, error) {
 	}
 	return claims["id"].(string), nil
 }
+//method for getting the claims
+func GetUserClaims(token string, secret string) (jwt.MapClaims, error) {
+	tokenString, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("your method for signing token")
+		}
+		return []byte(secret), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	claims, ok := tokenString.Claims.(jwt.MapClaims)
+	if !ok && !tokenString.Valid {
+		return nil, errors.New("invalid tokn for working")
+	}
+	return claims, nil
+}
