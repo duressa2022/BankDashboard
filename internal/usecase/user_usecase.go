@@ -3,8 +3,10 @@ package usecase
 import (
 	"context"
 	"errors"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"golang.org/x/crypto/bcrypt"
 	"working.com/bank_dash/internal/domain"
 	"working.com/bank_dash/internal/repository"
 )
@@ -12,58 +14,68 @@ import (
 // type for working with different use cases
 
 type UserUseCase struct {
-	userRepository *repository.UserRepository
+	UserRepository *repository.UserRepository
+	timeout        time.Duration
 }
 
 // method for working with the user repository
-func (uc *UserUseCase) NewUserUseCase(userRepository *repository.UserRepository) *UserUseCase {
+func NewUserUseCase(time time.Duration, userRepository *repository.UserRepository) *UserUseCase {
 	return &UserUseCase{
-		userRepository: userRepository,
+		UserRepository: userRepository,
+		timeout:        time,
 	}
 }
 
 // method for registering user into the database
 func (uc *UserUseCase) RegisterUser(c context.Context, user *domain.User) (*domain.UserResponse, error) {
-	_, err := uc.userRepository.GetByUserEmail(c, user.Email)
+	_, err := uc.UserRepository.GetByUserEmail(c, user.Email)
 	if err == nil {
 		return nil, errors.New("already registered user")
 	}
 	user.Id = primitive.NewObjectID()
-	//hash the password here
-
-	return uc.userRepository.PostUser(c, user)
+	hashed, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+	user.Password = string(hashed)
+	user.Role = "USER"
+	return uc.UserRepository.PostUser(c, user)
 }
 
 // method for updating user information
-func (uc *UserUseCase) UpdateInfo(c context.Context,id string,userRequest *domain.UserRequest)(*domain.UserResponse,error){
-	return uc.userRepository.UpdateUser(c,id,userRequest)
+func (uc *UserUseCase) UpdateInfo(c context.Context, id string, userRequest *domain.UserRequest) (*domain.UserResponse, error) {
+	return uc.UserRepository.UpdateUser(c, id, userRequest)
 }
 
-// method for updating user preference 
-func(uc *UserUseCase) UpdatePreference(c context.Context,id string,userPrefrence *domain.UserPreference)(*domain.UserPreference,error){
-	return uc.userRepository.UpdatePreference(c,id,userPrefrence)
+// method for updating user preference
+func (uc *UserUseCase) UpdatePreference(c context.Context, id string, userPrefrence *domain.UserPreference) (*domain.UserPreference, error) {
+	return uc.UserRepository.UpdatePreference(c, id, userPrefrence)
 }
 
 // method for getting user by using username
-func (uc *UserUseCase) GetByUserName(c context.Context,username string)(*domain.UserResponse,error){
-	return uc.userRepository.GetByUserName(c,username)
+func (uc *UserUseCase) GetByUserName(c context.Context, username string) (*domain.User, error) {
+	return uc.UserRepository.GetByUserName(c, username)
 }
 
 // method for logging user into the system
-func (uc *UserUseCase) LoginUser(c context.Context,loginInfo *domain.LoginRequest)(string,string,error){
-	_,err:=uc.userRepository.GetByUserName(c,loginInfo.Username)
-	if err!=nil{
-		return "","",err
+func (uc *UserUseCase) LoginUser(c context.Context, loginInfo *domain.LoginRequest) (*domain.User, error) {
+	user, err := uc.UserRepository.GetByUserName(c, loginInfo.Username)
+	if err != nil {
+		return nil, err
 	}
-	//compare the password here
-	//generate access and refresh token here
-	access:=""
-	refresh:=""
-	return access,refresh,nil
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginInfo.Password))
+	if err != nil {
+		return nil, errors.New("invalid password or username")
+	}
+	return user, nil
+
 }
 
-
-
-
-
-
+// method for working with password update
+func (uc *UserUseCase) UpdatePassword(c context.Context, username string, password string) error {
+	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	return uc.UserRepository.UpdateAnyData(c, username, string(hashed))
+}

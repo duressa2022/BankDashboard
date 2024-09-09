@@ -40,11 +40,11 @@ func (lc *LoanUseCase) GetLoanById(c context.Context, id string) (*domain.LoanRe
 }
 
 // method for getting the loans by using page number and size
-func (lc *LoanUseCase) GetMyLoans(c context.Context, page int, size int) ([]*domain.LoanResponse, error) {
+func (lc *LoanUseCase) GetMyLoans(c context.Context, page int, size int) ([]*domain.LoanResponse,int, error) {
 	return lc.loanRepository.GetMyLoans(c, page, size)
 }
 
 // method for getting the loans by using page number and size
-func (lc *LoanUseCase) All(c context.Context, page int, size int) ([]*domain.LoanResponse, error) {
+func (lc *LoanUseCase) All(c context.Context, page int, size int) ([]*domain.LoanResponse,int, error) {
 	return lc.loanRepository.GetMyLoans(c, page, size)
 }

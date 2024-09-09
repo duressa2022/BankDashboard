@@ -6,6 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"working.com/bank_dash/internal/domain"
 )
 
@@ -52,35 +53,64 @@ func (br *BankRepository) UpdateBank(c context.Context, id string, bankRequest *
 	}
 	return Bank, nil
 }
+
 // method for deleting bank service from the database
-func (br *BankRepository) DeleteBank(c context.Context,id string)error{
-	collection:=br.database.Collection(br.collection)
-	_,err:=collection.DeleteOne(c,bson.D{{Key: "_id",Value: id}})
+func (br *BankRepository) DeleteBank(c context.Context, id string) error {
+	collection := br.database.Collection(br.collection)
+	_, err := collection.DeleteOne(c, bson.D{{Key: "_id", Value: id}})
 	return err
 }
 
 // method for posting the bankservice into the database
-func (br *BankRepository) PostBank(c context.Context,bank *domain.BankRequest)(*domain.BankService,error){
-	collection:=br.database.Collection(br.collection)
-	userId,err:=collection.InsertOne(c,bank)
-	if err!=nil{
-		return nil,err
+func (br *BankRepository) PostBank(c context.Context, bank *domain.BankService) (*domain.BankService, error) {
+	collection := br.database.Collection(br.collection)
+	userId, err := collection.InsertOne(c, bank)
+	if err != nil {
+		return nil, err
 	}
 	var BankService *domain.BankService
-	err=collection.FindOne(c,bson.D{{Key: "id",Value: userId}}).Decode(&BankService)
-	if err!=nil{
-		return nil,err
+	err = collection.FindOne(c, bson.D{{Key: "id", Value: userId}}).Decode(&BankService)
+	if err != nil {
+		return nil, err
 	}
-	return BankService,nil
+	return BankService, nil
 }
 
 // method for searching by using name of the bank service
-func (br *BankRepository) SearchByName(c context.Context,term string)(*domain.BankService,error){
-	collection:=br.database.Collection(br.collection)
+func (br *BankRepository) SearchByName(c context.Context, term string) (*domain.BankService, error) {
+	collection := br.database.Collection(br.collection)
 	var Bank *domain.BankService
-	err:=collection.FindOne(c ,bson.D{{Key: "name",Value: term}}).Decode(&Bank)
-	if err!=nil{
-		return nil,err
+	err := collection.FindOne(c, bson.D{{Key: "name", Value: term}}).Decode(&Bank)
+	if err != nil {
+		return nil, err
 	}
-	return Bank,nil
+	return Bank, nil
+}
+
+// method for getting companies based on the page and size
+func (br *BankRepository) GetBanks(c context.Context, page int, size int) ([]*domain.BankService, int, error) {
+	var Banks []*domain.BankService
+	collection := br.database.Collection(br.collection)
+
+	skip := (page - 1) * size
+	opts := options.Find().SetSkip(int64(skip)).SetLimit(int64(size))
+	cursor, err := collection.Find(c, bson.D{{}}, opts)
+	if err != nil {
+		return nil, 0, err
+	}
+	for cursor.Next(c) {
+		var bank *domain.BankService
+		err := cursor.Decode(&bank)
+		if err != nil {
+			return nil, 0, err
+		}
+		Banks = append(Banks, bank)
+	}
+
+	totalnumber, err := collection.CountDocuments(c, bson.D{{}})
+	if err != nil {
+		return nil, 0, err
+	}
+	return Banks, int(totalnumber), nil
+
 }

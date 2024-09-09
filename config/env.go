@@ -1,12 +1,13 @@
 package config
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/spf13/viper"
 )
 
-// type for working all env varible
+// Env holds all the environment variables
 type Env struct {
 	AppEnv                 string `mapstructure:"APP_ENV"`
 	ServerAddress          string `mapstructure:"SERVER_ADDRESS"`
@@ -20,26 +21,34 @@ type Env struct {
 	RefreshTokenExpiryHour int    `mapstructure:"REFRESH_TOKEN_EXPIRY_HOUR"`
 	AccessTokenSecret      string `mapstructure:"ACCESS_TOKEN_SECRET"`
 	RefreshTokenSecret     string `mapstructure:"REFRESH_TOKEN_SECRET"`
+	URL                    string `mapstructure:"URL"`
 }
 
-// method for creating new Env
-func NewEnv() *Env {
+// NewEnv creates and loads environment variables from .env file
+func NewEnv() (*Env, error) {
 	env := Env{}
+
+	// Configure viper to read .env file
 	viper.SetConfigName(".env")
 	viper.SetConfigType("env")
 	viper.AddConfigPath("../")
 
+	// Read the config file
 	err := viper.ReadInConfig()
 	if err != nil {
-		log.Fatal("cant find the docs to read", err)
+		return nil, fmt.Errorf("error reading config file: %w", err)
 	}
+
+	// Unmarshal the config into the Env struct
 	err = viper.Unmarshal(&env)
 	if err != nil {
-		log.Fatal("error while loading the docs", err)
+		return nil, fmt.Errorf("error unmarshalling config file: %w", err)
 	}
-	if env.AppEnv == "developemnt" {
-		log.Println("app if running in dev env")
-	}
-	return &env
 
+	// Check if the application is in development mode
+	if env.AppEnv == "development" {
+		log.Println("App is running in development mode")
+	}
+
+	return &env, nil
 }

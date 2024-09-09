@@ -9,7 +9,7 @@ import (
 )
 
 // method fr creating access token
-func CreateAccessToken(user domain.UserResponse, secret string, exp int) (string, error) {
+func CreateAccessToken(user *domain.User, secret string, exp int) (string, error) {
 	time := time.Now().Add(time.Duration(exp))
 	claims := domain.Claims{
 		Username: user.UserName,
@@ -27,7 +27,7 @@ func CreateAccessToken(user domain.UserResponse, secret string, exp int) (string
 }
 
 // method for creating refresh token
-func CreateRefreshToken(user domain.UserResponse, secret string, exp int) (string, error) {
+func CreateRefreshToken(user *domain.User, secret string, exp int) (string, error) {
 	time := time.Now().Add(time.Duration(exp))
 	claims := domain.RefreshClaims{
 		ID: user.Id.Hex(),

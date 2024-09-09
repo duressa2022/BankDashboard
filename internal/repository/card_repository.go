@@ -17,7 +17,7 @@ type CardRepository struct {
 }
 
 // method for getting cards based on page and size
-func (cr *CardRepository) GetCards(c context.Context, page int32, size int32) ([]*domain.CardResponse, error) {
+func (cr *CardRepository) GetCards(c context.Context, page int32, size int32) ([]*domain.CardResponse, int, error) {
 	collection := cr.database.Collection(cr.collecton)
 	var Cards []*domain.CardResponse
 	skip := (page - 1) * size
@@ -25,22 +25,27 @@ func (cr *CardRepository) GetCards(c context.Context, page int32, size int32) ([
 
 	curser, err := collection.Find(c, bson.D{{}}, opts)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	for curser.Next(c) {
 		var card *domain.CardResponse
 		err := curser.Decode(&card)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		Cards = append(Cards, card)
 	}
-	return Cards, nil
+
+	total, err := collection.CountDocuments(c, bson.D{{}})
+	if err != nil {
+		return nil, 0, err
+	}
+	return Cards, int(total), nil
 
 }
 
 // method for posting card on the database
-func (cr *CardRepository) PostCard(c context.Context, cardRequest *domain.CardRequest) (*domain.Card, error) {
+func (cr *CardRepository) PostCard(c context.Context, cardRequest *domain.Card) (*domain.Card, error) {
 	collection := cr.database.Collection(cr.collecton)
 	cardId, err := collection.InsertOne(c, cardRequest)
 	if err != nil {
@@ -68,13 +73,14 @@ func (cr *CardRepository) GetCardById(c context.Context, id string) (*domain.Car
 	}
 	return card, nil
 }
+
 // method for deleting card by using card id
-func (cr *CardRepository)DeleteCard(c context.Context,id string)error{
-	collection:=cr.database.Collection(cr.collecton)
-	card_id,err:=primitive.ObjectIDFromHex(id)
-	if err!=nil{
+func (cr *CardRepository) DeleteCard(c context.Context, id string) error {
+	collection := cr.database.Collection(cr.collecton)
+	card_id, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
 		return err
 	}
-	_,err=collection.DeleteOne(c,bson.D{{Key: "_id",Value: card_id}})
+	_, err = collection.DeleteOne(c, bson.D{{Key: "_id", Value: card_id}})
 	return err
 }

@@ -4,14 +4,22 @@ import (
 	"context"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 	"working.com/bank_dash/internal/domain"
+	"working.com/bank_dash/package/mongo"
 )
 
 // type for working with user repository
 type UserRepository struct {
 	database   mongo.Database
 	collection string
+}
+
+// method for working with user repository
+func NewUserRepository(db mongo.Database, collection string) *UserRepository {
+	return &UserRepository{
+		database:   db,
+		collection: collection,
+	}
 }
 
 // method for creating/inserting user into the database
@@ -82,15 +90,16 @@ func (ur *UserRepository) UpdatePreference(c context.Context, id string, userPre
 }
 
 // method for getting user information by using username
-func (ur *UserRepository) GetByUserName(c context.Context, username string) (*domain.UserResponse, error) {
+func (ur *UserRepository) GetByUserName(c context.Context, username string) (*domain.User, error) {
 	collection := ur.database.Collection(ur.collection)
-	var User *domain.UserResponse
+	var User *domain.User
 	err := collection.FindOne(c, bson.D{{Key: "username", Value: username}}).Decode(&User)
 	if err != nil {
-		return &domain.UserResponse{}, err
+		return &domain.User{}, err
 	}
 	return User, nil
 }
+
 // method for getting user information by using username
 func (ur *UserRepository) GetByUserEmail(c context.Context, email string) (*domain.UserResponse, error) {
 	collection := ur.database.Collection(ur.collection)
@@ -100,4 +109,16 @@ func (ur *UserRepository) GetByUserEmail(c context.Context, email string) (*doma
 		return nil, err
 	}
 	return User, nil
+}
+
+// method for updating any data
+func (ur *UserRepository) UpdateAnyData(c context.Context,username string,password string)error{
+	collection:=ur.database.Collection(ur.collection)
+	updated:=bson.M{
+		"password":password,
+	}
+
+	_,err:=collection.UpdateOne(c,bson.D{{Key: "username",Value: username}},bson.D{{Key: "$set",Value:updated }})
+	return err
+
 }

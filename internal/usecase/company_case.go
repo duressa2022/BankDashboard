@@ -37,7 +37,7 @@ func (cu *CompanyUseCase) DeleteCompany(c context.Context, id string) error {
 }
 
 // method for getting by using page number and size
-func (cu *CompanyUseCase) GetCompanies(c context.Context, page int64, size int64) ([]*domain.Company, error) {
+func (cu *CompanyUseCase) GetCompanies(c context.Context, page int64, size int64) ([]*domain.Company, int, error) {
 	return cu.companyRepository.GetCompanies(c, int(page), int(size))
 }
 
@@ -51,7 +51,7 @@ func (cu *CompanyUseCase) PostCompany(c context.Context, company *domain.Company
 	return cu.companyRepository.PostCompany(c, &newCompany)
 }
 
-// method for getting trending companies 
-func (cu *CompanyUseCase) GetTrendingCompanies(c context.Context)([]*domain.Company,error){
+// method for getting trending companies
+func (cu *CompanyUseCase) GetTrendingCompanies(c context.Context) ([]*domain.Company, error) {
 	return cu.companyRepository.GetTrendingCompanies(c)
 }

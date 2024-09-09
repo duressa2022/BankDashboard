@@ -54,7 +54,7 @@ func (cr *CompanyRepository) DeleteCompany(c context.Context, id string) error {
 }
 
 // method for getting companies based on the page and size
-func (cr *CompanyRepository) GetCompanies(c context.Context, page int, size int) ([]*domain.Company, error) {
+func (cr *CompanyRepository) GetCompanies(c context.Context, page int, size int) ([]*domain.Company, int, error) {
 	var Companies []*domain.Company
 	collection := cr.database.Collection(cr.collection)
 
@@ -62,17 +62,22 @@ func (cr *CompanyRepository) GetCompanies(c context.Context, page int, size int)
 	opts := options.Find().SetSkip(int64(skip)).SetLimit(int64(size))
 	cursor, err := collection.Find(c, bson.D{{}}, opts)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	for cursor.Next(c) {
 		var company *domain.Company
 		err := cursor.Decode(&company)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		Companies = append(Companies, company)
 	}
-	return Companies, nil
+
+	totalnumber, err := collection.CountDocuments(c, bson.D{{}})
+	if err != nil {
+		return nil, 0, err
+	}
+	return Companies, int(totalnumber), nil
 
 }
 
@@ -93,22 +98,22 @@ func (cr *CompanyRepository) PostCompany(c context.Context, company *domain.Comp
 }
 
 // method for getting a trending companies from the database
-func (cr *CompanyRepository) GetTrendingCompanies(c context.Context)([]*domain.Company,error){
-	collection:=cr.database.Collection(cr.collection)
+func (cr *CompanyRepository) GetTrendingCompanies(c context.Context) ([]*domain.Company, error) {
+	collection := cr.database.Collection(cr.collection)
 	var companies []*domain.Company
-	cursor,err:=collection.Find(c,bson.D{{}})
-	if err!=nil{
-		return nil,err
+	cursor, err := collection.Find(c, bson.D{{}})
+	if err != nil {
+		return nil, err
 	}
-	for(cursor.Next(c)){
+	for cursor.Next(c) {
 		var company *domain.Company
-		err=cursor.Decode(&company)
-		if err!=nil{
-			return nil,err
+		err = cursor.Decode(&company)
+		if err != nil {
+			return nil, err
 		}
-		companies=append(companies, company)
+		companies = append(companies, company)
 
 	}
-	return companies,nil
+	return companies, nil
 
 }

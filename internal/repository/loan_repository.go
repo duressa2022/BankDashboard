@@ -71,59 +71,66 @@ func (lr *LoanRepository) Approve(c context.Context, id string) (*domain.LoanRes
 	}
 	return loan, nil
 }
+
 // method for getting loan by using id
-func (lr *LoanRepository)GetLoanById(c context.Context,id string)(*domain.LoanResponse,error){
-	collection:=lr.database.Collection(lr.collection)
-	loanId,err:=primitive.ObjectIDFromHex(id)
-	if err!=nil{
-		return nil,err
+func (lr *LoanRepository) GetLoanById(c context.Context, id string) (*domain.LoanResponse, error) {
+	collection := lr.database.Collection(lr.collection)
+	loanId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
 	}
 	var loan *domain.LoanResponse
-	err=collection.FindOne(c,bson.D{{Key: "_id",Value: loanId}}).Decode(&loan)
-	if err!=nil{
-		return nil,err
+	err = collection.FindOne(c, bson.D{{Key: "_id", Value: loanId}}).Decode(&loan)
+	if err != nil {
+		return nil, err
 	}
-	return loan,err
+	return loan, err
 }
+
 // method for getting by using page and size
-func (lr *LoanRepository)GetMyLoans(c context.Context,page int,size int)([]*domain.LoanResponse,error){
-	collection:=lr.database.Collection(lr.collection)
-	skip:=(page-1)*size
-	opts:=options.Find().SetSkip(int64(skip)).SetLimit(int64(size))
+func (lr *LoanRepository) GetMyLoans(c context.Context, page int, size int) ([]*domain.LoanResponse, int, error) {
+	collection := lr.database.Collection(lr.collection)
+	skip := (page - 1) * size
+	opts := options.Find().SetSkip(int64(skip)).SetLimit(int64(size))
 
 	var loans []*domain.LoanResponse
-	cursor,err:=collection.Find(c,bson.D{{}},opts)
-	if err!=nil{
-		return nil,err
+	cursor, err := collection.Find(c, bson.D{{}}, opts)
+	if err != nil {
+		return nil, 0, err
 	}
-	for(cursor.Next(c)){
+	for cursor.Next(c) {
 		var loan *domain.LoanResponse
-		err:=cursor.Decode(&loan)
-		if err!=nil{
-			return nil,err
+		err := cursor.Decode(&loan)
+		if err != nil {
+			return nil, 0, err
 		}
-		loans=append(loans, loan)
+		loans = append(loans, loan)
 	}
-	return loans,nil
+	total, err := collection.CountDocuments(c, bson.D{{}})
+	if err != nil {
+		return nil, 0, err
+	}
+	return loans, int(total), nil
 }
+
 // method for getting all loans from the database
-func (lr *LoanRepository)All(c context.Context,page int,size int)([]*domain.LoanResponse,error){
-	collection:=lr.database.Collection(lr.collection)
-	skip:=(page-1)*size
-	opts:=options.Find().SetSkip(int64(skip)).SetLimit(int64(size))
+func (lr *LoanRepository) All(c context.Context, page int, size int) ([]*domain.LoanResponse, error) {
+	collection := lr.database.Collection(lr.collection)
+	skip := (page - 1) * size
+	opts := options.Find().SetSkip(int64(skip)).SetLimit(int64(size))
 
 	var loans []*domain.LoanResponse
-	cursor,err:=collection.Find(c,bson.D{{}},opts)
-	if err!=nil{
-		return nil,err
+	cursor, err := collection.Find(c, bson.D{{}}, opts)
+	if err != nil {
+		return nil, err
 	}
-	for(cursor.Next(c)){
+	for cursor.Next(c) {
 		var loan *domain.LoanResponse
-		err:=cursor.Decode(&loan)
-		if err!=nil{
-			return nil,err
+		err := cursor.Decode(&loan)
+		if err != nil {
+			return nil, err
 		}
-		loans=append(loans, loan)
+		loans = append(loans, loan)
 	}
-	return loans,nil
+	return loans, nil
 }
