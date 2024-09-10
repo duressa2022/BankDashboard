@@ -8,54 +8,48 @@ import (
 	"working.com/bank_dash/internal/domain"
 )
 
-// method fr creating access token
+// method for creating access token
 func CreateAccessToken(user *domain.User, secret string, exp int) (string, error) {
-	time := time.Now().Add(time.Duration(exp))
+	expirationTime := time.Now().Add(time.Duration(exp) * time.Second)
 	claims := domain.Claims{
 		Username: user.UserName,
 		ID:       user.Id.Hex(),
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time),
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte(secret))
-	if err != nil {
-		return "", err
-	}
-	return tokenString, nil
+	return token.SignedString([]byte(secret))
 }
 
 // method for creating refresh token
 func CreateRefreshToken(user *domain.User, secret string, exp int) (string, error) {
-	time := time.Now().Add(time.Duration(exp))
+	expirationTime := time.Now().Add(time.Duration(exp) * time.Second)
 	claims := domain.RefreshClaims{
 		ID: user.Id.Hex(),
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time),
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte(secret))
-	if err != nil {
-		return "", err
-	}
-	return tokenString, err
+	return token.SignedString([]byte(secret))
 }
 
 // method for verfying access and refresh token
 func VerifyToken(token string, secret string) (bool, error) {
+
 	tokenString, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return "", errors.New("error of method usage")
+			return nil, errors.New("unexpected signing method")
 		}
 		return []byte(secret), nil
 	})
+
 	if err != nil {
-		return false, nil
+		return false, err
 	}
 	if !tokenString.Valid {
-		return false, nil
+		return false, errors.New("invalid token")
 	}
 	return true, nil
 }
@@ -96,7 +90,8 @@ func GetUserId(token string, secret string) (string, error) {
 	}
 	return claims["id"].(string), nil
 }
-//method for getting the claims
+
+// method for getting the claims
 func GetUserClaims(token string, secret string) (jwt.MapClaims, error) {
 	tokenString, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {

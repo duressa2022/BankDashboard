@@ -6,17 +6,21 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+const (
+	LoanCollection = "loans"
+)
+
 // type for working with loan information
 type Loan struct {
-	Id                primitive.ObjectID `json:"id" bson:"_id"`
 	LoanAmount        float64            `json:"loanAmount" bson:"loanAmount"`
 	AmountLeftToRepay float64            `json:"amountLeftToRepay" bson:"amountLeftToRepay"`
 	Duration          int32              `json:"duration" bson:"duration"`
 	InterestRate      float64            `json:"interestRate" bson:"interestRate"`
 	Installment       int32              `json:"installment" bson:"installment"`
 	Type              string             `json:"type" bson:"type"`
-	ActiveLoneStatus  string             `json:"activeLoanStatus" bson:"activeLoneStatus"`
+	ActiveLoanStatus  string             `json:"activeLoanStatus" bson:"activeLoanStatus"`
 	UserId            primitive.ObjectID `json:"userId" bson:"_userId"`
+	SerialNumber      primitive.ObjectID `json:"serialNumber" bson:"_serialnumber"`
 }
 
 // type for working with loan response
@@ -27,8 +31,9 @@ type LoanResponse struct {
 	InterestRate      float64            `json:"interestRate" bson:"interestRate"`
 	Installment       int32              `json:"installment" bson:"installment"`
 	Type              string             `json:"type" bson:"type"`
-	ActiveLoneStatus  string             `json:"activeLoanStatus" bson:"activeLoneStatus"`
+	ActiveLoanStatus  string             `json:"activeLoanStatus" bson:"activeLoanStatus"`
 	UserId            primitive.ObjectID `json:"userId" bson:"_userId"`
+	SerialNumber      primitive.ObjectID `json:"serialNumber" bson:"_serialnumber"`
 }
 
 // type for working with request information

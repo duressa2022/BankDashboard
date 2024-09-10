@@ -7,9 +7,9 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"working.com/bank_dash/internal/domain"
+	"working.com/bank_dash/package/mongo"
 )
 
 // type for working bank transactions
@@ -17,6 +17,15 @@ type TransactionRepo struct {
 	database       mongo.Database
 	collection     string
 	userCollection string
+}
+
+// method for working with bank transaction
+func NewTransactionRepository(db mongo.Database, transactioncollection string, usercollection string) *TransactionRepo {
+	return &TransactionRepo{
+		database:       db,
+		collection:     transactioncollection,
+		userCollection: usercollection,
+	}
 }
 
 // method for getting transactions based on page and size
@@ -123,4 +132,3 @@ func (tr *TransactionRepo) GetTransactionById(c context.Context, id string) (*do
 
 	return &transaction, nil
 }
-

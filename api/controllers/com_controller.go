@@ -56,7 +56,7 @@ func (cc *CompanyController) UpdateCompanyByID(c *gin.Context) {
 	}
 	response := map[string]interface{}{
 		"succes":  true,
-		"message": updated,
+		"message": "updated",
 		"data":    updated,
 	}
 	c.IndentedJSON(http.StatusOK, response)
@@ -115,7 +115,7 @@ func (cc *CompanyController) GetCompaniessBYLimit(c *gin.Context) {
 }
 
 // handler for posting company
-func (cc *CompanyController) GetAllCompany(c *gin.Context) {
+func (cc *CompanyController) PostCompany(c *gin.Context) {
 	var company domain.CompanyRequest
 	if err := c.BindJSON(&company); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "error of data"})

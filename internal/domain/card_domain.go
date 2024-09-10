@@ -7,6 +7,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+const (
+	CardCollection = "cards"
+)
+
 // type for working with card information
 type Card struct {
 	Id         primitive.ObjectID `json:"id" bson:"_id"`

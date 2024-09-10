@@ -15,14 +15,14 @@ import (
 
 type UserUseCase struct {
 	UserRepository *repository.UserRepository
-	timeout        time.Duration
+	Timeout        time.Duration
 }
 
 // method for working with the user repository
 func NewUserUseCase(time time.Duration, userRepository *repository.UserRepository) *UserUseCase {
 	return &UserUseCase{
 		UserRepository: userRepository,
-		timeout:        time,
+		Timeout:        time,
 	}
 }
 
@@ -32,6 +32,12 @@ func (uc *UserUseCase) RegisterUser(c context.Context, user *domain.User) (*doma
 	if err == nil {
 		return nil, errors.New("already registered user")
 	}
+
+	_, err = uc.UserRepository.GetByUserName(c, user.UserName)
+	if err == nil {
+		return nil, errors.New("already used username")
+	}
+
 	user.Id = primitive.NewObjectID()
 	hashed, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -48,18 +54,23 @@ func (uc *UserUseCase) UpdateInfo(c context.Context, id string, userRequest *dom
 }
 
 // method for updating user preference
-func (uc *UserUseCase) UpdatePreference(c context.Context, id string, userPrefrence *domain.UserPreference) (*domain.UserPreference, error) {
+func (uc *UserUseCase) UpdatePreference(c context.Context, id string, userPrefrence *domain.UserPreference) (*domain.UserResponse, error) {
 	return uc.UserRepository.UpdatePreference(c, id, userPrefrence)
 }
 
 // method for getting user by using username
-func (uc *UserUseCase) GetByUserName(c context.Context, username string) (*domain.User, error) {
+func (uc *UserUseCase) GetByUserName(c context.Context, username string) (*domain.UserResponse, error) {
 	return uc.UserRepository.GetByUserName(c, username)
+}
+
+// method for getting user by using username
+func (uc *UserUseCase) GetByUserNameForPass(c context.Context, username string) (*domain.User, error) {
+	return uc.UserRepository.GetByUserNameForPass(c, username)
 }
 
 // method for logging user into the system
 func (uc *UserUseCase) LoginUser(c context.Context, loginInfo *domain.LoginRequest) (*domain.User, error) {
-	user, err := uc.UserRepository.GetByUserName(c, loginInfo.Username)
+	user, err := uc.UserRepository.GetByUserNameForPass(c, loginInfo.Username)
 	if err != nil {
 		return nil, err
 	}
@@ -72,10 +83,11 @@ func (uc *UserUseCase) LoginUser(c context.Context, loginInfo *domain.LoginReque
 }
 
 // method for working with password update
-func (uc *UserUseCase) UpdatePassword(c context.Context, username string, password string) error {
-	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+func (uc *UserUseCase) UpdatePassword(c context.Context, username string, passInfo *domain.ChangePassword) error {
+	hashed, err := bcrypt.GenerateFromPassword([]byte(passInfo.NewPassword), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
-	return uc.UserRepository.UpdateAnyData(c, username, string(hashed))
+	passInfo.NewPassword=string(hashed)
+	return uc.UserRepository.UpdatePassword(c, username,passInfo)
 }

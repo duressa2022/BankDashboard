@@ -2,12 +2,13 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"working.com/bank_dash/internal/domain"
+	"working.com/bank_dash/package/mongo"
 )
 
 // type for working with bank service repos
@@ -16,17 +17,25 @@ type BankRepository struct {
 	collection string
 }
 
+// method for working bank service repos
+func NewBankRepository(db mongo.Database, collection string) *BankRepository {
+	return &BankRepository{
+		database:   db,
+		collection: collection,
+	}
+}
+
 // method for getting banks by using id
 func (br *BankRepository) GetBankById(c context.Context, id string) (*domain.BankService, error) {
 	collection := br.database.Collection(br.collection)
 	company_id, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return &domain.BankService{}, err
+		return nil, err
 	}
 	var Bank *domain.BankService
 	err = collection.FindOne(c, bson.D{{Key: "_id", Value: company_id}}).Decode(&Bank)
 	if err != nil {
-		return &domain.BankService{}, err
+		return nil, err
 	}
 	return Bank, err
 }
@@ -42,10 +51,23 @@ func (br *BankRepository) UpdateBank(c context.Context, id string, bankRequest *
 		"type":          bankRequest.Type,
 		"icon":          bankRequest.Icon,
 	}
-	BankId, err := collection.UpdateOne(c, bson.D{{Key: "_id", Value: id}}, bson.M{"$set": UpdatingBank})
+
+	BankId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
 	}
+
+	updateResult, err := collection.UpdateOne(c, bson.D{{Key: "_id", Value: BankId}}, bson.M{"$set": UpdatingBank})
+	if err != nil {
+		return nil, err
+	}
+	if updateResult.MatchedCount == 0 {
+		return nil, errors.New("no matched docs are found")
+	}
+	if updateResult.ModifiedCount == 0 {
+		return nil, errors.New("no modified docs are found")
+	}
+
 	var Bank *domain.BankService
 	err = collection.FindOne(c, bson.D{{Key: "_id", Value: BankId}}).Decode(&Bank)
 	if err != nil {
@@ -57,23 +79,34 @@ func (br *BankRepository) UpdateBank(c context.Context, id string, bankRequest *
 // method for deleting bank service from the database
 func (br *BankRepository) DeleteBank(c context.Context, id string) error {
 	collection := br.database.Collection(br.collection)
-	_, err := collection.DeleteOne(c, bson.D{{Key: "_id", Value: id}})
+	BankId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+	_, err = collection.DeleteOne(c, bson.D{{Key: "_id", Value: BankId}})
 	return err
 }
 
 // method for posting the bankservice into the database
 func (br *BankRepository) PostBank(c context.Context, bank *domain.BankService) (*domain.BankService, error) {
 	collection := br.database.Collection(br.collection)
-	userId, err := collection.InsertOne(c, bank)
+
+	var Existing *domain.BankService
+	err := collection.FindOne(c, bson.D{{Key: "name", Value: bank.Name}}).Decode(&Existing)
+	if err == nil {
+		return nil, errors.New("already existing bank")
+	}
+	bankId, err := collection.InsertOne(c, bank)
 	if err != nil {
 		return nil, err
 	}
-	var BankService *domain.BankService
-	err = collection.FindOne(c, bson.D{{Key: "id", Value: userId}}).Decode(&BankService)
+
+	var BankService domain.BankService
+	err = collection.FindOne(c, bson.D{{Key: "_id", Value: bankId}}).Decode(&BankService)
 	if err != nil {
 		return nil, err
 	}
-	return BankService, nil
+	return &BankService, nil
 }
 
 // method for searching by using name of the bank service

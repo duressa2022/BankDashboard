@@ -5,15 +5,23 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"working.com/bank_dash/internal/domain"
+	"working.com/bank_dash/package/mongo"
 )
 
 // type for working with card information
 type CardRepository struct {
 	database  mongo.Database
 	collecton string
+}
+
+// methof for working card repository
+func NewCardRepository(db mongo.Database, collection string) *CardRepository {
+	return &CardRepository{
+		database:  db,
+		collecton: collection,
+	}
 }
 
 // method for getting cards based on page and size

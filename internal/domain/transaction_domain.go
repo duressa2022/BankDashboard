@@ -7,6 +7,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+const (
+	TransactionCollection = "transaction"
+)
+
 // type for working with transaction information
 type Transaction struct {
 	TransactionId    primitive.ObjectID `json:"transactionId" bson:"_transactionId"`

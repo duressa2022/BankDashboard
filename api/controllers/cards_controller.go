@@ -12,14 +12,14 @@ import (
 
 // struct for working with card controller
 type CardController struct {
-	cardUseCase *usecase.CardUseCase
+	CardUseCase *usecase.CardUseCase
 	Env         *config.Env
 }
 
 // method for working card controller
 func NewCardController(env *config.Env, card *usecase.CardUseCase) *CardController {
 	return &CardController{
-		cardUseCase: card,
+		CardUseCase: card,
 		Env:         env,
 	}
 }
@@ -38,11 +38,12 @@ func (cc *CardController) GetCards(c *gin.Context) {
 		sizeNumber = 1
 	}
 
-	cards, total, err := cc.cardUseCase.GetCards(c, int32(pageNumber), int32(sizeNumber))
+	cards, total, err := cc.CardUseCase.GetCards(c, int32(pageNumber), int32(sizeNumber))
 	if err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "error "})
 		return
 	}
+	totalPages := (total + sizeNumber - 1) / sizeNumber
 
 	response := map[string]interface{}{
 		"succces": true,
@@ -50,7 +51,7 @@ func (cc *CardController) GetCards(c *gin.Context) {
 		"content": map[string]interface{}{
 			"data": cards,
 		},
-		"totalpages": total,
+		"totalpages": totalPages,
 	}
 	c.IndentedJSON(http.StatusOK, response)
 
@@ -58,13 +59,25 @@ func (cc *CardController) GetCards(c *gin.Context) {
 
 // handler for posting card
 func (cc *CardController) PostCard(c *gin.Context) {
-	var card domain.Card
+	var card domain.CardRequest
 	if err := c.BindJSON(&card); err != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "invalid data"})
 		return
 	}
 
-	created, err := cc.cardUseCase.PostCard(c, &card)
+	UserId, exist := c.Get("id")
+	if !exist {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "invalid data"})
+		return
+	}
+
+	Id, okay := UserId.(string)
+	if !okay {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "invalid data"})
+		return
+	}
+
+	created, err := cc.CardUseCase.PostCard(c, Id, &card)
 	if err != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
@@ -80,9 +93,9 @@ func (cc *CardController) PostCard(c *gin.Context) {
 
 // handler for getting card by id
 func (cc *CardController) GetCardById(c *gin.Context) {
-	id := c.Query("id")
+	id := c.Param("id")
 
-	card, err := cc.cardUseCase.GetCardById(c, id)
+	card, err := cc.CardUseCase.GetCardById(c, id)
 	if err != nil {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": err.Error()})
 		return
@@ -98,10 +111,10 @@ func (cc *CardController) GetCardById(c *gin.Context) {
 }
 
 // handler for getting card by id
-func (cc *CardController) GetDeleteById(c *gin.Context) {
-	id := c.Query("id")
+func (cc *CardController) DeleteById(c *gin.Context) {
+	id := c.Param("id")
 
-	err := cc.cardUseCase.DeleteCard(c, id)
+	err := cc.CardUseCase.DeleteCard(c, id)
 	if err != nil {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": err.Error()})
 		return

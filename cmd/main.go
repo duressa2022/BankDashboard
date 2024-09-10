@@ -24,7 +24,6 @@ func main() {
 	timeout := time.Duration(env.ContextTimeout) * time.Second
 
 	gin := gin.Default()
-
-	routes.SetUp(env, timeout, db, gin)
+	routes.SetUpRoute(env, timeout, db, gin)
 	gin.Run(env.ServerAddress)
 }

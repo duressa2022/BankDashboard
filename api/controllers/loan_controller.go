@@ -32,7 +32,19 @@ func (lc *LoanController) ActiveLoan(c *gin.Context) {
 		return
 	}
 
-	Active, err := lc.LoanUseCase.ActiveLoan(c, &loan)
+	Id, exist := c.Get("id")
+	if !exist {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "error od data"})
+		return
+	}
+
+	UserID, okay := Id.(string)
+	if !okay {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "error of data type"})
+		return
+	}
+
+	Active, err := lc.LoanUseCase.ActiveLoan(c, UserID, &loan)
 	if err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
@@ -48,7 +60,7 @@ func (lc *LoanController) ActiveLoan(c *gin.Context) {
 
 // handler for rejecting loans
 func (lc *LoanController) Reject(c *gin.Context) {
-	id := c.Query("id")
+	id := c.Param("id")
 
 	err := lc.LoanUseCase.Reject(c, id)
 	if err != nil {
@@ -67,7 +79,7 @@ func (lc *LoanController) Reject(c *gin.Context) {
 
 // handler for approving loans
 func (lc *LoanController) Approve(c *gin.Context) {
-	id := c.Query("id")
+	id := c.Param("id")
 
 	loan, err := lc.LoanUseCase.Approve(c, id)
 	if err != nil {

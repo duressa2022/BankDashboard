@@ -2,12 +2,13 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"working.com/bank_dash/internal/domain"
+	"working.com/bank_dash/package/mongo"
 )
 
 // type for working with loan information
@@ -16,21 +17,28 @@ type LoanRepository struct {
 	collection string
 }
 
-// method for getting loan based on the information
-func (lr *LoanRepository) ActiveLoan(c context.Context, loanRequest *domain.LoanRequest) (*domain.LoanResponse, error) {
-	collection := lr.database.Collection(lr.collection)
-	filter := bson.M{
-		"loanAmount":   loanRequest.LoanAmount,
-		"duration":     loanRequest.Duration,
-		"interestRate": loanRequest.InterestRate,
-		"type":         loanRequest.Type,
+// method for working with loan information
+func NewLoanRepository(db mongo.Database, collection string) *LoanRepository {
+	return &LoanRepository{
+		database:   db,
+		collection: collection,
 	}
-	var Loan *domain.LoanResponse
-	err := collection.FindOne(c, filter).Decode(&Loan)
+}
+
+// method for getting loan based on the information
+func (lr *LoanRepository) ActiveLoan(c context.Context, loan *domain.Loan) (*domain.LoanResponse, error) {
+	collection := lr.database.Collection(lr.collection)
+	loanId, err := collection.InsertOne(c, loan)
 	if err != nil {
 		return nil, err
 	}
-	return Loan, nil
+
+	var loanResponse *domain.LoanResponse
+	err = collection.FindOne(c, bson.D{{Key: "_id", Value: loanId}}).Decode(&loanResponse)
+	if err != nil {
+		return nil, err
+	}
+	return loanResponse, nil
 }
 
 // method for rejecting the loan requests
@@ -43,9 +51,15 @@ func (lr *LoanRepository) Reject(c context.Context, id string) error {
 	updating := bson.M{
 		"activeLoanStatus": "rejected",
 	}
-	_, err = collection.UpdateOne(c, bson.D{{Key: "_id", Value: loanId}}, updating)
+	updatedResult, err := collection.UpdateOne(c, bson.D{{Key: "_serialnumber", Value: loanId}}, bson.M{"$set": updating})
 	if err != nil {
 		return err
+	}
+	if updatedResult.MatchedCount == 0 {
+		return errors.New("no matched document")
+	}
+	if updatedResult.ModifiedCount == 0 {
+		return errors.New("no modified document")
 	}
 	return nil
 }
@@ -60,12 +74,20 @@ func (lr *LoanRepository) Approve(c context.Context, id string) (*domain.LoanRes
 	updating := bson.M{
 		"activeLoanStatus": "approved",
 	}
-	_, err = collection.UpdateOne(c, bson.D{{Key: "_id", Value: loanId}}, updating)
+
+	updatedResult, err := collection.UpdateOne(c, bson.D{{Key: "_serialnumber", Value: loanId}}, bson.M{"$set": updating})
 	if err != nil {
 		return nil, err
 	}
+	if updatedResult.MatchedCount == 0 {
+		return nil, errors.New("no matched docs")
+	}
+	if updatedResult.ModifiedCount == 0 {
+		return nil, errors.New("no modified docs")
+	}
+
 	var loan *domain.LoanResponse
-	err = collection.FindOne(c, bson.D{{Key: "_id", Value: id}}).Decode(&loan)
+	err = collection.FindOne(c, bson.D{{Key: "_serialnumber", Value: loanId}}).Decode(&loan)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +102,7 @@ func (lr *LoanRepository) GetLoanById(c context.Context, id string) (*domain.Loa
 		return nil, err
 	}
 	var loan *domain.LoanResponse
-	err = collection.FindOne(c, bson.D{{Key: "_id", Value: loanId}}).Decode(&loan)
+	err = collection.FindOne(c, bson.D{{Key: "_serialnumber", Value: loanId}}).Decode(&loan)
 	if err != nil {
 		return nil, err
 	}
