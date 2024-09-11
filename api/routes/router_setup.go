@@ -9,11 +9,11 @@ import (
 	"working.com/bank_dash/package/mongo"
 )
 
-
 // method for setting the route
 func SetUpRoute(env *config.Env, timeout time.Duration, db mongo.Database, router *gin.Engine) {
 	publicRoute := router.Group("/auth")
 	initPublicUserRoutes(env, timeout, db, publicRoute)
+	initPublicChatRoute(env, timeout, db, publicRoute)
 
 	protectedRoute := router.Group("/", middlewares.JwtAuthMiddleWare(env.AccessTokenSecret))
 	initProtectedCompanyRoute(env, timeout, db, protectedRoute.Group("companies"))

@@ -7,6 +7,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+const (
+	ChatCollection = "chats"
+)
+
 // type for working with chatting domain
 type ChatMessage struct {
 	ID        primitive.ObjectID `json:"id" bson:"_id"`
