@@ -13,7 +13,7 @@ import (
 )
 
 // method for init public route for the chat controller
-func initPublicChatRoute(env *config.Env, timeout time.Duration, db mongo.Database, group *gin.RouterGroup) {
+func initProtectedChatRoute(env *config.Env, timeout time.Duration, db mongo.Database, group *gin.RouterGroup) {
 	cr := repository.NewChatRepository(db, domain.ChatCollection)
 	cc := controllers.ChatController{
 		ChatUseCase: usecase.NewChatUseCase(timeout, cr),

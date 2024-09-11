@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -33,6 +34,7 @@ func (cc *ChatController) HandleChat(c *gin.Context) {
 	}
 
 	Userid, exist := c.Get("id")
+	fmt.Print(Userid)
 	if !exist {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Invalid data for userid"})
 		return

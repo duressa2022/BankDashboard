@@ -13,7 +13,6 @@ import (
 func SetUpRoute(env *config.Env, timeout time.Duration, db mongo.Database, router *gin.Engine) {
 	publicRoute := router.Group("/auth")
 	initPublicUserRoutes(env, timeout, db, publicRoute)
-	initPublicChatRoute(env, timeout, db, publicRoute)
 
 	protectedRoute := router.Group("/", middlewares.JwtAuthMiddleWare(env.AccessTokenSecret))
 	initProtectedCompanyRoute(env, timeout, db, protectedRoute.Group("companies"))
@@ -22,4 +21,5 @@ func SetUpRoute(env *config.Env, timeout time.Duration, db mongo.Database, route
 	initProtectedCardRoute(env, timeout, db, protectedRoute.Group("cards"))
 	initProtectedLoanRoute(env, timeout, db, protectedRoute.Group("active-loans"))
 	initProtectedUserRoutes(env, timeout, db, protectedRoute.Group("user"))
+	initProtectedChatRoute(env, timeout, db, protectedRoute.Group("user"))
 }
