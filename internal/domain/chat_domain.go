@@ -20,4 +20,5 @@ type ChatMessage struct {
 type ChatRepository interface {
 	StoreMessage(c context.Context, userID string, message ChatMessage) (*ChatMessage, error)
 	GetMessage(c context.Context, userId string) ([]*ChatMessage, error)
+	DeleteChatMessage(c context.Context, userID string, messageLimit int64) error
 }
