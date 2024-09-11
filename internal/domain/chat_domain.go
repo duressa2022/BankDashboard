@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -17,6 +18,6 @@ type ChatMessage struct {
 
 // interface for working with chat message repository
 type ChatRepository interface {
-	StoreMessage(userID string, message ChatMessage) (*ChatMessage, error)
-	GetMessage(userId string) ([]*ChatMessage, error)
+	StoreMessage(c context.Context, userID string, message ChatMessage) (*ChatMessage, error)
+	GetMessage(c context.Context, userId string) ([]*ChatMessage, error)
 }
