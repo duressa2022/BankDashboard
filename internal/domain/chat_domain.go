@@ -16,6 +16,17 @@ type ChatMessage struct {
 	TimeStamp time.Time          `json:"timeStamp" bson:"timeStamp"`
 }
 
+// type for working with chat response
+type ChatResponse struct {
+	Message  string `json:"message" bson:"message"`
+	Response string `json:"response" bson:"response"`
+}
+
+// type for working with chat request
+type ChatRequest struct {
+	Message string `json:"message" bson:"message"`
+}
+
 // interface for working with chat message repository
 type ChatRepository interface {
 	StoreMessage(c context.Context, userID string, message ChatMessage) (*ChatMessage, error)
