@@ -29,14 +29,14 @@ func NewChatRepository(db mongo.Database, collection string) *ChatRepository {
 }
 
 // method for storing chat message into the database
-func (cr *ChatRepository) StoreMessage(c context.Context, message *domain.ChatMessage) (*domain.ChatMessage, error) {
+func (cr *ChatRepository) StoreMessage(c context.Context, message *domain.ChatMessage) (*domain.ChatResponse, error) {
 	collection := cr.database.Collection(cr.collection)
 	chatId, err := collection.InsertOne(c, message)
 	if err != nil {
 		return nil, err
 	}
 
-	var chatData domain.ChatMessage
+	var chatData domain.ChatResponse
 	err = collection.FindOne(c, bson.D{{Key: "_id", Value: chatId}}).Decode(&chatData)
 	if err != nil {
 		return nil, err
@@ -46,7 +46,7 @@ func (cr *ChatRepository) StoreMessage(c context.Context, message *domain.ChatMe
 }
 
 // method getting chat history from the database based id
-func (cr *ChatRepository) GetMessage(c context.Context, id string) ([]*domain.ChatMessage, error) {
+func (cr *ChatRepository) GetMessage(c context.Context, id string) ([]*domain.ChatResponse, error) {
 	cr.DeleteChatMessage(c, id, Limit)
 
 	collection := cr.database.Collection(cr.collection)
@@ -60,9 +60,9 @@ func (cr *ChatRepository) GetMessage(c context.Context, id string) ([]*domain.Ch
 		return nil, err
 	}
 
-	var chatHistroy []*domain.ChatMessage
+	var chatHistroy []*domain.ChatResponse
 	for cursor.Next(c) {
-		var histroy *domain.ChatMessage
+		var histroy *domain.ChatResponse
 		err := cursor.Decode(&histroy)
 		if err != nil {
 			return nil, err
