@@ -58,6 +58,16 @@ func (uc *UserController) LoginIN(c *gin.Context) {
 		true,
 	)
 
+	c.SetCookie(
+		"username",
+		user.UserName,
+		uc.Env.RefreshTokenExpiryHour,
+		"",
+		"",
+		true,
+		true,
+	)
+
 	response := map[string]interface{}{
 		"success": true,
 		"message": "logged in",
@@ -241,25 +251,19 @@ func (uc *UserController) RefreshToken(c *gin.Context) {
 
 // handler for working with changing password or username
 func (uc *UserController) ChangePassword(c *gin.Context) {
+	username, err := c.Cookie("username")
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Invalid data for token"})
+		return
+	}
+
 	var loginData domain.ChangePassword
 	if err := c.BindJSON(&loginData); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Invalid input"})
 		return
 	}
 
-	userData, okay := c.Get("username")
-	if !okay {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Invalid input"})
-		return
-	}
-
-	username, okay := userData.(string)
-	if !okay {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "error of data"})
-		return
-	}
-
-	err := uc.UserUseCase.UpdatePassword(c, username, &loginData)
+	err = uc.UserUseCase.UpdatePassword(c, username, &loginData)
 	if err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
