@@ -155,17 +155,17 @@ func (ur *UserRepository) GetByUserEmail(c context.Context, email string) (*doma
 }
 
 // method for updating password
-func (ur *UserRepository) UpdatePassword(c context.Context, username string,passInfo *domain.ChangePassword) error {
+func (ur *UserRepository) UpdatePassword(c context.Context, username string, passInfo *domain.ChangePassword) error {
 	collection := ur.database.Collection(ur.collection)
 	var user *domain.User
-	
-	err:=collection.FindOne(c,bson.D{{Key: "username",Value: username}}).Decode(&user)
-	if err!=nil{
+
+	err := collection.FindOne(c, bson.D{{Key: "username", Value: username}}).Decode(&user)
+	if err != nil {
 		return err
 	}
 
-	err=bcrypt.CompareHashAndPassword([]byte(user.Password),[]byte(passInfo.Password))
-	if err!=nil{
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(passInfo.Password))
+	if err != nil {
 		return errors.New("password is not correct")
 	}
 
@@ -178,3 +178,19 @@ func (ur *UserRepository) UpdatePassword(c context.Context, username string,pass
 
 }
 
+// method for getting user by using id
+func (ur *UserRepository) GetUserId(c context.Context, id string) (*domain.User, error) {
+	collection := ur.database.Collection(ur.collection)
+	UserId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	var user *domain.User
+	err = collection.FindOne(c, bson.D{{Key: "_id", Value: UserId}}).Decode(&user)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}

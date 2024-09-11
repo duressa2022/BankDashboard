@@ -86,7 +86,7 @@ func GetUserId(token string, secret string) (string, error) {
 	}
 	claims, ok := tokenString.Claims.(jwt.MapClaims)
 	if !ok && !tokenString.Valid {
-		return "", errors.New("invalid tokn for working")
+		return "", errors.New("invalid token for working")
 	}
 	return claims["id"].(string), nil
 }

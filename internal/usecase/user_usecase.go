@@ -88,6 +88,11 @@ func (uc *UserUseCase) UpdatePassword(c context.Context, username string, passIn
 	if err != nil {
 		return err
 	}
-	passInfo.NewPassword=string(hashed)
-	return uc.UserRepository.UpdatePassword(c, username,passInfo)
+	passInfo.NewPassword = string(hashed)
+	return uc.UserRepository.UpdatePassword(c, username, passInfo)
+}
+
+// method for getting user by using id
+func (uc *UserUseCase) GetUserId(c context.Context, id string) (*domain.User, error) {
+	return uc.UserRepository.GetUserId(c, id)
 }

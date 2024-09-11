@@ -197,18 +197,7 @@ func (uc *UserController) GetByUserName(c *gin.Context) {
 
 // handler for refreshing the token
 func (uc *UserController) RefreshToken(c *gin.Context) {
-	userData, okay := c.Get("username")
-	if !okay {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "error of data"})
-		return
-	}
-	username, okay := userData.(string)
-	if !okay {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "error of data type"})
-		return
-	}
-
-	refreshToken, err := c.Cookie("refresh-token")
+	refreshToken, err := c.Cookie("refresh_token")
 	if err != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "no existing  data"})
 		return
@@ -220,9 +209,15 @@ func (uc *UserController) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	user, err := uc.UserUseCase.GetByUserNameForPass(c, username)
+	Id, err := tokens.GetUserId(refreshToken, uc.Env.RefreshTokenSecret)
 	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "error of data"})
+		return
+	}
+
+	user, err := uc.UserUseCase.GetUserId(c, Id)
+	if err != nil {
+		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "user not found"})
 		return
 	}
 
