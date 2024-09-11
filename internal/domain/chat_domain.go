@@ -14,3 +14,9 @@ type ChatMessage struct {
 	Response  string             `json:"response" bson:"response"`
 	TimeStamp time.Time          `json:"timeStamp" bson:"timeStamp"`
 }
+
+// interface for working with chat message repository
+type ChatRepository interface {
+	StoreMessage(userID string, message ChatMessage) (*ChatMessage, error)
+	GetMessage(userId string) ([]*ChatMessage, error)
+}
