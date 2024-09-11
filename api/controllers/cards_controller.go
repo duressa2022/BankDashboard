@@ -35,7 +35,7 @@ func (cc *CardController) GetCards(c *gin.Context) {
 	}
 	sizeNumber, err := strconv.Atoi(size)
 	if err != nil || sizeNumber < 1 {
-		sizeNumber = 1
+		sizeNumber = 10
 	}
 
 	cards, total, err := cc.CardUseCase.GetCards(c, int32(pageNumber), int32(sizeNumber))
