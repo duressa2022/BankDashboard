@@ -10,7 +10,7 @@ import (
 
 // method for creating access token
 func CreateAccessToken(user *domain.User, secret string, exp int) (string, error) {
-	expirationTime := time.Now().Add(time.Duration(exp) * time.Second)
+	expirationTime := time.Now().Add(time.Duration(exp) * time.Hour)
 	claims := domain.Claims{
 		Username: user.UserName,
 		ID:       user.Id.Hex(),
@@ -24,7 +24,7 @@ func CreateAccessToken(user *domain.User, secret string, exp int) (string, error
 
 // method for creating refresh token
 func CreateRefreshToken(user *domain.User, secret string, exp int) (string, error) {
-	expirationTime := time.Now().Add(time.Duration(exp) * time.Second)
+	expirationTime := time.Now().Add(time.Duration(exp) * time.Hour)
 	claims := domain.RefreshClaims{
 		ID: user.Id.Hex(),
 		RegisteredClaims: jwt.RegisteredClaims{

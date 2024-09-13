@@ -9,7 +9,6 @@ import (
 	"working.com/bank_dash/package/mongo"
 )
 
-
 // method for setting the route
 func SetUpRoute(env *config.Env, timeout time.Duration, db mongo.Database, router *gin.Engine) {
 	publicRoute := router.Group("/auth")
