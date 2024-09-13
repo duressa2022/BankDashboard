@@ -48,6 +48,7 @@ func (cc *ChatController) HandleChat(c *gin.Context) {
 
 	prompt, err := cc.ChatUseCase.CreatePrompt(c, userID, Message)
 	if err != nil {
+
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
