@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	// "go.mongodb.org/mongo-driver/bson/primitive"
@@ -18,14 +19,90 @@ type TransactionRepository struct {
 	collection string
 }
 
+// GetTransactionExpense implements domain.TransactionRepository.
+func (t *TransactionRepository) GetTransactionExpense(ctx context.Context, claims jwt.Claims, page int, size int) ([]domain.Transaction, int, error) {
+	var transactions []domain.Transaction
+
+	collection := t.database.Collection(t.collection)
+	skip := (page - 1) * size
+	findOptions := options.Find()
+	findOptions.SetSkip(int64(skip))
+	findOptions.SetLimit(int64(size))
+	findOptions.SetSort(bson.D{{Key: "date", Value: -1}})
+
+	filter := bson.D{{Key: "senderUserName", Value: claims.(jwt.MapClaims)["username"].(string)}, {Key: "receiverUserName", Value: bson.D{{Key: "$ne", Value: claims.(jwt.MapClaims)["username"].(string)}}}}
+
+	totalCount, err := collection.CountDocuments(ctx, filter)
+	if err != nil {
+		return transactions, 0, err
+	}
+	totalPage := int((totalCount + int64(size) - 1) / int64(size))
+
+	cursor, err := collection.Find(ctx, filter, findOptions)
+	if err != nil {
+		return transactions, 0, err
+	}
+	for cursor.Next(ctx) {
+		var transaction domain.Transaction
+		if err = cursor.Decode(&transaction); err != nil {
+			return transactions, 0, err
+		}
+		transactions = append(transactions, transaction)
+	}
+	return transactions, totalPage, nil
+}
+
+// GetIncomeTransaction implements domain.TransactionRepository.
+func (t *TransactionRepository) GetIncomeTransaction(ctx context.Context, claims jwt.Claims, page int, size int) ([]domain.Transaction, int, error) {
+	var transactions []domain.Transaction
+
+	collection := t.database.Collection(t.collection)
+	skip := (page - 1) * size
+	findOptions := options.Find()
+	findOptions.SetSkip(int64(skip))
+	findOptions.SetLimit(int64(size))
+	findOptions.SetSort(bson.D{{Key: "date", Value: -1}})
+	filter := bson.D{{Key: "receiverUserName", Value: claims.(jwt.MapClaims)["username"].(string)}}
+
+	totalCount, err := collection.CountDocuments(ctx, filter)
+	if err != nil {
+		return transactions, 0, err
+	}
+	totalPage := int((totalCount + int64(size) - 1) / int64(size))
+	cursor, err := collection.Find(ctx, filter, findOptions)
+	if err != nil {
+		return transactions, 0, err
+	}
+	defer cursor.Close(ctx)
+	for cursor.Next(ctx) {
+		var transaction domain.Transaction
+		if err = cursor.Decode(&transaction); err != nil {
+			return transactions, 0, err
+		}
+		transactions = append(transactions, transaction)
+	}
+	return transactions, totalPage, nil
+}
+
+// GetTransactionById implements domain.TransactionRepository.
+func (t *TransactionRepository) GetTransactionById(ctx context.Context, id primitive.ObjectID) (domain.Transaction, error) {
+	var transaction domain.Transaction
+	collection := t.database.Collection(t.collection)
+	err := collection.FindOne(ctx, bson.D{{Key: "_id", Value: id}}).Decode(&transaction)
+	if err != nil {
+		return domain.Transaction{}, err
+	}
+	return transaction, nil
+}
+
 // PostTransaction implements domain.TransactionRepository.
 func (t *TransactionRepository) PostTransaction(ctx context.Context, claims jwt.Claims, tr domain.TransactionRequest) (domain.Transaction, error) {
 	new_transaction := domain.TransactionDb{
-		Type: 					 tr.Type,
-		SenderUserName:  claims.(jwt.MapClaims)["username"].(string),
-		Description:     tr.Description,
-		Date:            time.Now(),
-		Amount: 				tr.Amount,
+		Type:             tr.Type,
+		SenderUserName:   claims.(jwt.MapClaims)["username"].(string),
+		Description:      tr.Description,
+		Date:             time.Now(),
+		Amount:           tr.Amount,
 		ReceiverUserName: tr.ReceiverUserName,
 	}
 	collection := t.database.Collection(t.collection)
@@ -43,9 +120,6 @@ func (t *TransactionRepository) PostTransaction(ctx context.Context, claims jwt.
 	return new_tra, nil
 
 }
-
-
-
 
 // GetTransaction implements domain.TransactionRepository.
 func (t *TransactionRepository) GetTransaction(ctx context.Context, claims jwt.Claims, page int, size int) ([]domain.Transaction, int, error) {
@@ -65,8 +139,6 @@ func (t *TransactionRepository) GetTransaction(ctx context.Context, claims jwt.C
 		return transactions, 0, err
 	}
 	totalPage := int((totalCount + int64(size) - 1) / int64(size))
-
-
 
 	cursor, err := collection.Find(ctx, filter, findOptions)
 	if err != nil {

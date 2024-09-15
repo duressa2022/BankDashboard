@@ -27,5 +27,7 @@ func initProtectedTransactionRoute(env *config.Env, timeout time.Duration, db mo
 	group.GET("", tc.GetTransaction)
 	group.POST("", tc.PostTransaction)
 	group.POST("/deposit", tc.DepositTransaction)
-	// group.GET("/:id", tc.GetTransactionById)
+	group.GET("/:id", tc.GetTransactionById)
+	group.GET("/income", tc.GetIncomeTransaction)
+	group.GET("/expense", tc.GetTransactionExpense)
 }
