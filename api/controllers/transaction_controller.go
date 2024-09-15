@@ -205,3 +205,52 @@ func (tc *TransactionController) GetIncomeTransaction(c *gin.Context) {
 		"totalPage": totalPage,
 	})
 }
+
+func (tc *TransactionController) GetTransactionExpense(c *gin.Context) {
+	token := c.Request.Header.Get("Authorization")
+	tokenString := strings.TrimPrefix(token, "Bearer ")
+	p := c.Query("page")
+	s := c.Query("size")
+	page, err := strconv.ParseInt(p, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "page must be a number",
+		})
+		return
+	}
+	size, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "size must be a number",
+		})
+		return
+	}
+
+	if page < 1 || size < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "page and size must be greater than 0",
+		})
+		return
+	}
+
+	claims, _ := tokens.GetUserClaims(tokenString, tc.Env.AccessTokenSecret)
+	data, totalPage, err := tc.TransactionUsecase.GetTransactionExpense(c, claims, int(page), int(size));
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "transaction fetched successfully",
+		"data": gin.H{
+			"content": data,
+		},
+		"totalPage": totalPage,
+	})
+}

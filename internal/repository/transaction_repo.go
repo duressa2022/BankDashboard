@@ -19,6 +19,39 @@ type TransactionRepository struct {
 	collection string
 }
 
+// GetTransactionExpense implements domain.TransactionRepository.
+func (t *TransactionRepository) GetTransactionExpense(ctx context.Context, claims jwt.Claims, page int, size int) ([]domain.Transaction, int, error) {
+	var transactions []domain.Transaction
+
+	collection := t.database.Collection(t.collection)
+	skip := (page - 1) * size
+	findOptions := options.Find()
+	findOptions.SetSkip(int64(skip))
+	findOptions.SetLimit(int64(size))
+	findOptions.SetSort(bson.D{{Key: "date", Value: -1}})
+
+	filter := bson.D{{Key: "senderUserName", Value: claims.(jwt.MapClaims)["username"].(string)}, {Key: "receiverUserName", Value: bson.D{{Key: "$ne", Value: claims.(jwt.MapClaims)["username"].(string)}}}}
+
+	totalCount, err := collection.CountDocuments(ctx, filter)
+	if err != nil {
+		return transactions, 0, err
+	}
+	totalPage := int((totalCount + int64(size) - 1) / int64(size))
+
+	cursor, err := collection.Find(ctx, filter, findOptions)
+	if err != nil {
+		return transactions, 0, err
+	}
+	for cursor.Next(ctx) {
+		var transaction domain.Transaction
+		if err = cursor.Decode(&transaction); err != nil {
+			return transactions, 0, err
+		}
+		transactions = append(transactions, transaction)
+	}
+	return transactions, totalPage, nil
+}
+
 // GetIncomeTransaction implements domain.TransactionRepository.
 func (t *TransactionRepository) GetIncomeTransaction(ctx context.Context, claims jwt.Claims, page int, size int) ([]domain.Transaction, int, error) {
 	var transactions []domain.Transaction

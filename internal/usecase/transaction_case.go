@@ -14,6 +14,11 @@ type TransactionUsecase struct {
 	contextTimeout        time.Duration
 }
 
+// GetTransactionExpense implements domain.TransactionUsecase.
+func (t *TransactionUsecase) GetTransactionExpense(ctx context.Context, claims jwt.Claims, page int, size int) ([]domain.Transaction, int, error) {
+	return t.transactionRepository.GetTransactionExpense(ctx, claims, page, size)
+}
+
 // GetIncomeTransaction implements domain.TransactionUsecase.
 func (t *TransactionUsecase) GetIncomeTransaction(ctx context.Context, claims jwt.Claims, page int, size int) ([]domain.Transaction, int, error) {
 	return t.transactionRepository.GetIncomeTransaction(ctx, claims, page, size)
