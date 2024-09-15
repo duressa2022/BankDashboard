@@ -13,6 +13,16 @@ type TransactionUsecase struct {
 	contextTimeout        time.Duration
 }
 
+// DepositTransaction implements domain.TransactionUsecase.
+func (t *TransactionUsecase) DepositTransaction(ctx context.Context, claims jwt.Claims, tr domain.TransactionDeposit) (domain.Transaction, error) {
+	var trr domain.TransactionRequest;
+	trr.Amount = tr.Amount
+	trr.Description = tr.Description
+	trr.ReceiverUserName = claims.(jwt.MapClaims)["username"].(string)
+	trr.Type = "deposit"
+	return t.transactionRepository.PostTransaction(ctx, claims, trr)
+}
+
 // PostTransaction implements domain.TransactionUsecase.
 func (t *TransactionUsecase) PostTransaction(ctx context.Context, claims jwt.Claims, tr domain.TransactionRequest) (domain.Transaction, error) {
 	return t.transactionRepository.PostTransaction(ctx, claims, tr)

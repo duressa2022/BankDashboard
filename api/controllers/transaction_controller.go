@@ -92,3 +92,33 @@ func (tc *TransactionController) PostTransaction(c *gin.Context) {
 		},
 	})
 }
+
+func (tc *TransactionController) DepositTransaction(c *gin.Context) {
+	token := c.Request.Header.Get("Authorization")
+	tokenString := strings.TrimPrefix(token, "Bearer ")
+	var tr domain.TransactionDeposit
+	err := c.BindJSON(&tr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "invalid request body",
+			"success": false,
+		})
+		return
+	}
+	claims, _ := tokens.GetUserClaims(tokenString, tc.Env.AccessTokenSecret)
+	data, err := tc.TransactionUsecase.DepositTransaction(c, claims, tr);
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"success": false,
+		})
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "transaction created successfully",
+		"success": true,
+		"data": gin.H{
+			"content": data,
+		},
+	})
+}
