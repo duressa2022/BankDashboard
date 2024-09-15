@@ -4,40 +4,38 @@ import (
 	"context"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"working.com/bank_dash/internal/domain"
-	"working.com/bank_dash/internal/repository"
 )
 
-// type for working with the transactions
-type TransactionUseCase struct {
-	Transaction *repository.TransactionRepo
-	Timeout     time.Duration
+type TransactionUsecase struct {
+	transactionRepository domain.TransactionRepository
+	contextTimeout        time.Duration
 }
 
-// method for creating new transaction usecase
-func NewTransactionUseCase(time time.Duration, transaction *repository.TransactionRepo) *TransactionUseCase {
-	return &TransactionUseCase{
-		Transaction: transaction,
-		Timeout:     time,
+// DepositTransaction implements domain.TransactionUsecase.
+func (t *TransactionUsecase) DepositTransaction(ctx context.Context, claims jwt.Claims, tr domain.TransactionDeposit) (domain.Transaction, error) {
+	var trr domain.TransactionRequest;
+	trr.Amount = tr.Amount
+	trr.Description = tr.Description
+	trr.ReceiverUserName = claims.(jwt.MapClaims)["username"].(string)
+	trr.Type = "deposit"
+	return t.transactionRepository.PostTransaction(ctx, claims, trr)
+}
+
+// PostTransaction implements domain.TransactionUsecase.
+func (t *TransactionUsecase) PostTransaction(ctx context.Context, claims jwt.Claims, tr domain.TransactionRequest) (domain.Transaction, error) {
+	return t.transactionRepository.PostTransaction(ctx, claims, tr)
+}
+
+// GetTransaction implements domain.TransactionUsecase.
+func (t *TransactionUsecase) GetTransaction(ctx context.Context, claims jwt.Claims, page int, size int) ([]domain.Transaction, int, error) {
+	return t.transactionRepository.GetTransaction(ctx, claims, page, size)
+}
+
+func NewTransactionUsecase(transactionRepository domain.TransactionRepository, contextTimeout time.Duration) domain.TransactionUsecase {
+	return &TransactionUsecase{
+		transactionRepository: transactionRepository,
+		contextTimeout:        contextTimeout,
 	}
-}
-
-// method for getting page size and number
-func (tu *TransactionUseCase) GetTransactions(c context.Context, page int64, size int64) ([]*domain.Transaction, int, error) {
-	return tu.Transaction.GetTransactions(c, int32(page), int32(size))
-}
-
-// method for posting the transaction on to the database
-func (tu *TransactionUseCase) PostTransaction(c context.Context, transaction *domain.Transaction) (*domain.Transaction, error) {
-	return tu.Transaction.PostTransaction(c, transaction)
-}
-
-// method for deposting the transaction on account
-func (tu *TransactionUseCase) Deposit(c context.Context, sender string, recipent string, description *domain.DepositTransaction) (*domain.Transaction, error) {
-	return tu.Transaction.Deposit(c, sender, recipent, description)
-}
-
-// method for getting transaction by using id
-func (tu *TransactionUseCase) GetTransactionById(c context.Context, id string) (*domain.Transaction, error) {
-	return tu.Transaction.GetTransactionById(c, id)
 }

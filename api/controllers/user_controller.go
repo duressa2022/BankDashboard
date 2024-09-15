@@ -83,6 +83,7 @@ func (uc *UserController) LoginIN(c *gin.Context) {
 // Signup handler for registering a new user
 func (uc *UserController) Signup(c *gin.Context) {
 	var user *domain.User
+	fmt.Println("creating a user")
 	if err := c.BindJSON(&user); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Invalid input"})
 		return
