@@ -50,10 +50,14 @@ type TransactionDeposit struct {
 type TransactionRepository interface {
 	GetTransaction(ctx context.Context, claims jwt.Claims, page int, size int) ([]Transaction, int, error)
 	PostTransaction(ctx context.Context, claims jwt.Claims, tr TransactionRequest) (Transaction, error)
+	GetTransactionById(ctx context.Context, id primitive.ObjectID) (Transaction, error)
+	GetIncomeTransaction(ctx context.Context, claims jwt.Claims, page int, size int) ([]Transaction, int, error)
 }
 
 type TransactionUsecase interface {
 	GetTransaction(ctx context.Context, claims jwt.Claims, page int, size int) ([]Transaction, int, error)
 	PostTransaction(ctx context.Context, claims jwt.Claims, tr TransactionRequest) (Transaction, error)
 	DepositTransaction(ctx context.Context, claims jwt.Claims, tr TransactionDeposit) (Transaction, error)
+	GetTransactionById(ctx context.Context, id primitive.ObjectID) (Transaction, error)
+	GetIncomeTransaction(ctx context.Context, claims jwt.Claims, page int, size int) ([]Transaction, int, error)
 }

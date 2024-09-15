@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"working.com/bank_dash/internal/domain"
 )
 
@@ -13,9 +14,19 @@ type TransactionUsecase struct {
 	contextTimeout        time.Duration
 }
 
+// GetIncomeTransaction implements domain.TransactionUsecase.
+func (t *TransactionUsecase) GetIncomeTransaction(ctx context.Context, claims jwt.Claims, page int, size int) ([]domain.Transaction, int, error) {
+	return t.transactionRepository.GetIncomeTransaction(ctx, claims, page, size)
+}
+
+// GetTransactionById implements domain.TransactionUsecase.
+func (t *TransactionUsecase) GetTransactionById(ctx context.Context, id primitive.ObjectID) (domain.Transaction, error) {
+	return t.transactionRepository.GetTransactionById(ctx, id)
+}
+
 // DepositTransaction implements domain.TransactionUsecase.
 func (t *TransactionUsecase) DepositTransaction(ctx context.Context, claims jwt.Claims, tr domain.TransactionDeposit) (domain.Transaction, error) {
-	var trr domain.TransactionRequest;
+	var trr domain.TransactionRequest
 	trr.Amount = tr.Amount
 	trr.Description = tr.Description
 	trr.ReceiverUserName = claims.(jwt.MapClaims)["username"].(string)
