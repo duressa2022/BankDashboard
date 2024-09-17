@@ -25,13 +25,18 @@ func NewCardRepository(db mongo.Database, collection string) *CardRepository {
 }
 
 // method for getting cards based on page and size
-func (cr *CardRepository) GetCards(c context.Context, page int32, size int32) ([]*domain.CardResponse, int, error) {
+func (cr *CardRepository) GetCards(c context.Context, id string, page int32, size int32) ([]*domain.CardResponse, int, error) {
 	collection := cr.database.Collection(cr.collecton)
 	var Cards []*domain.CardResponse
 	skip := (page - 1) * size
 	opts := options.Find().SetSkip(int64(skip)).SetLimit(int64(size))
 
-	curser, err := collection.Find(c, bson.D{{}}, opts)
+	user_id, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	curser, err := collection.Find(c, bson.D{{Key: "_userId", Value: user_id}}, opts)
 	if err != nil {
 		return nil, 0, err
 	}

@@ -26,6 +26,17 @@ func NewCardController(env *config.Env, card *usecase.CardUseCase) *CardControll
 
 // handler for working with card pagination
 func (cc *CardController) GetCards(c *gin.Context) {
+	useId,exist:=c.Get("id")
+	if !exist{
+		c.IndentedJSON(http.StatusBadRequest,gin.H{"message":"error for data"})
+		return 
+	}
+	Id,okay:=useId.(string)
+	if !okay{
+		c.IndentedJSON(http.StatusBadRequest,gin.H{"message":"error of type"})
+		return 
+	}
+
 	page := c.Query("page")
 	size := c.Query("size")
 
@@ -38,7 +49,7 @@ func (cc *CardController) GetCards(c *gin.Context) {
 		sizeNumber = 10
 	}
 
-	cards, total, err := cc.CardUseCase.GetCards(c, int32(pageNumber), int32(sizeNumber))
+	cards, total, err := cc.CardUseCase.GetCards(c, Id,int32(pageNumber), int32(sizeNumber))
 	if err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "error "})
 		return

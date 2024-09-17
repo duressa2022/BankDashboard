@@ -110,13 +110,18 @@ func (lr *LoanRepository) GetLoanById(c context.Context, id string) (*domain.Loa
 }
 
 // method for getting by using page and size
-func (lr *LoanRepository) GetMyLoans(c context.Context, page int, size int) ([]*domain.LoanResponse, int, error) {
+func (lr *LoanRepository) GetMyLoans(c context.Context, id string, page int, size int) ([]*domain.LoanResponse, int, error) {
 	collection := lr.database.Collection(lr.collection)
 	skip := (page - 1) * size
 	opts := options.Find().SetSkip(int64(skip)).SetLimit(int64(size))
 
+	userid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, 0, err
+	}
+
 	var loans []*domain.LoanResponse
-	cursor, err := collection.Find(c, bson.D{{}}, opts)
+	cursor, err := collection.Find(c, bson.D{{Key: "_userId", Value: userid}}, opts)
 	if err != nil {
 		return nil, 0, err
 	}

@@ -127,7 +127,18 @@ func (lc *LoanController) GetMyLoans(c *gin.Context) {
 		sizeNumber = 10
 	}
 
-	loans, total, err := lc.LoanUseCase.GetMyLoans(c, pageNumber, sizeNumber)
+	id, exist := c.Get("id")
+	if !exist {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"success": false, "message": "error of data"})
+		return
+	}
+	UserId, okay := id.(string)
+	if !okay {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"success": false, "message": "error of type"})
+		return
+	}
+
+	loans, total, err := lc.LoanUseCase.GetMyLoans(c, UserId, pageNumber, sizeNumber)
 	if err != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
@@ -160,7 +171,19 @@ func (lc *LoanController) All(c *gin.Context) {
 		sizeNumber = 10
 	}
 
-	loans, total, err := lc.LoanUseCase.GetMyLoans(c, pageNumber, sizeNumber)
+	id, exist := c.Get("id")
+	if !exist {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"success": false, "message": "error of data"})
+		return
+	}
+
+	userid, okay := id.(string)
+	if !okay {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"success": false, "message": "error of type"})
+		return
+	}
+
+	loans, total, err := lc.LoanUseCase.GetMyLoans(c, userid, pageNumber, sizeNumber)
 	if err != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return

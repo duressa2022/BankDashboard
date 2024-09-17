@@ -24,8 +24,8 @@ func NewCardUseCase(time time.Duration, card *repository.CardRepository) *CardUs
 }
 
 // method for getting by using page number and size
-func (cu *CardUseCase) GetCards(c context.Context, page int32, size int32) ([]*domain.CardResponse, int, error) {
-	return cu.CardRepository.GetCards(c, page, size)
+func (cu *CardUseCase) GetCards(c context.Context,id string, page int32, size int32) ([]*domain.CardResponse, int, error) {
+	return cu.CardRepository.GetCards(c,id, page, size)
 }
 
 // method for posting cards/information on the database
