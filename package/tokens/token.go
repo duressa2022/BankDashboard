@@ -10,7 +10,7 @@ import (
 
 // method for creating access token
 func CreateAccessToken(user *domain.User, secret string, exp int) (string, error) {
-	expirationTime := time.Now().Add(time.Duration(exp) * time.Hour)
+	expirationTime := time.Now().Add(time.Duration(exp) * time.Second)
 	claims := domain.Claims{
 		Username: user.UserName,
 		ID:       user.Id.Hex(),
@@ -24,7 +24,7 @@ func CreateAccessToken(user *domain.User, secret string, exp int) (string, error
 
 // method for creating refresh token
 func CreateRefreshToken(user *domain.User, secret string, exp int) (string, error) {
-	expirationTime := time.Now().Add(time.Duration(exp) * time.Hour)
+	expirationTime := time.Now().Add(time.Duration(exp) * time.Second)
 	claims := domain.RefreshClaims{
 		ID: user.Id.Hex(),
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -35,7 +35,7 @@ func CreateRefreshToken(user *domain.User, secret string, exp int) (string, erro
 	return token.SignedString([]byte(secret))
 }
 
-// method for verfying access and refresh token
+// method for verifying access and refresh token
 func VerifyToken(token string, secret string) (bool, error) {
 
 	tokenString, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
@@ -48,9 +48,11 @@ func VerifyToken(token string, secret string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
 	if !tokenString.Valid {
 		return false, errors.New("invalid token")
 	}
+
 	return true, nil
 }
 
@@ -65,12 +67,19 @@ func GetUserName(token string, secret string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	claims, ok := tokenString.Claims.(jwt.MapClaims)
-	if !ok && !tokenString.Valid {
-		return "", err
-	}
-	return claims["username"].(string), err
 
+	claims, ok := tokenString.Claims.(jwt.MapClaims)
+	if !ok || !tokenString.Valid {
+		return "", errors.New("invalid token for working")
+	}
+
+	// Safely access "username"
+	username, ok := claims["username"].(string)
+	if !ok {
+		return "", errors.New("username not found in token claims")
+	}
+
+	return username, nil
 }
 
 // method for getting id from the token
@@ -84,11 +93,19 @@ func GetUserId(token string, secret string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	claims, ok := tokenString.Claims.(jwt.MapClaims)
-	if !ok && !tokenString.Valid {
+	if !ok || !tokenString.Valid {
 		return "", errors.New("invalid token for working")
 	}
-	return claims["id"].(string), nil
+
+	// Safely access "id"
+	id, ok := claims["id"].(string)
+	if !ok {
+		return "", errors.New("id not found in token claims")
+	}
+
+	return id, nil
 }
 
 // method for getting the claims
@@ -102,9 +119,11 @@ func GetUserClaims(token string, secret string) (jwt.MapClaims, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	claims, ok := tokenString.Claims.(jwt.MapClaims)
-	if !ok && !tokenString.Valid {
-		return nil, errors.New("invalid tokn for working")
+	if !ok || !tokenString.Valid {
+		return nil, errors.New("invalid token for working")
 	}
+
 	return claims, nil
 }
