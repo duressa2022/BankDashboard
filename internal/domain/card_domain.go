@@ -10,7 +10,6 @@ import (
 const (
 	CardCollection = "cards"
 )
-
 // type for working with card information
 type Card struct {
 	Id         primitive.ObjectID `json:"id" bson:"_id"`
