@@ -109,5 +109,4 @@ func SetUpRoute(env *config.Env, timeout time.Duration, db mongo.Database, route
     initProtectedChatRoute(env, timeout, db, protectedRoute.Group("user"))
 }
 ```
-This API structure ensures a modular and scalable banking dashboard. 🚀
 
